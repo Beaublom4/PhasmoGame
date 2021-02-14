@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Photon.Voice.PUN;
 using TMPro;
 using System.IO;
 using Photon.Realtime;
@@ -12,9 +13,10 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
 {
     [SerializeField] TMP_Text playerName, roomName;
     [SerializeField] GameObject playerItem, startButton;
-    [SerializeField] Transform playerList;
+    [SerializeField] Transform playerList, voicesList;
     [SerializeField] Acount acount;
 
+    public PhotonVoiceView PVV;
     PhotonView PV;
 
     private void Awake()
@@ -71,8 +73,10 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             startButton.SetActive(false);
 
-        //player info spawn here
-        PV.RPC("InstantiatePlayerItem", RpcTarget.AllBuffered, acount.playerName, acount.playerLevel, acount.character);
+        //PV.RPC("InstantiatePlayerItem", RpcTarget.AllBuffered, acount.playerName, acount.playerLevel, acount.character);
+        PhotonNetwork.Instantiate(Path.Combine("Player", "PlayerItem"), Vector3.zero, Quaternion.identity);
+        //GameObject g = PhotonNetwork.Instantiate(Path.Combine("Player", "VoicePlayer"), Vector3.zero, Quaternion.identity);
+        //PVV = g.GetComponent<PhotonVoiceView>();
         MenuSwitcher.Instance.SwitchPanel("room");
     }
     void CheckIfNameAvailable(int nameNum)
@@ -113,7 +117,7 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
                 break;
             }
         }
-
+        PhotonNetwork.Destroy(PVV.gameObject);
         PhotonNetwork.LeaveRoom();
         MenuSwitcher.Instance.SwitchPanel("loaing");
     }
