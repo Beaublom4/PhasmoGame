@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 837453263116a954b848955dba223a9c, type: 3}
+  m_Name: dikke nigga
+  m_EditorClassIdentifier: 
+  ghostName: neger
+  walkingspeed: 5
+  HuntingSpeed: 10
+  agressionLevel: 7
+  shyLevel: 9
+  window: 1
+  door: 1
+  sound: 1
+  walkingInHallWay: 1
+  objectMove: 1
+  lights: 1
+  alarmsOn: 1
+  playerLevetate: 1
+  eMF: 1
+  SpiritBox: 1
+  weWeBord: 1
+  soundWaves: 1
+  lightsActivity: 1
+  TempCold: 1
+  inMirror: 1
+  typeMachine: 1
+  filtherCam: 1
+  ghostCamDistord: 1
