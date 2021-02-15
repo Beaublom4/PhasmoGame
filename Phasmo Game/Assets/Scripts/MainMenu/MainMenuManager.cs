@@ -16,6 +16,11 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     [SerializeField] Transform playerList, voicesList;
     [SerializeField] Acount acount;
 
+    public List<int> lvls = new List<int>();
+    public List<int> characters = new List<int>();
+    public bool buffered;
+    IEnumerator bufferCoroutine;
+
     public PhotonVoiceView PVV;
     PhotonView PV;
 
@@ -27,6 +32,22 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     {
         print("Connecting");
         PhotonNetwork.ConnectUsingSettings();
+    }
+    private void Update()
+    {
+        if(PhotonNetwork.InRoom)
+        if(!buffered && lvls.Count == PhotonNetwork.PlayerList.Length)
+        {
+            buffered = true;
+            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+            {
+                GameObject g = Instantiate(playerItem, playerList);
+                PlayerItem PI = g.GetComponent<PlayerItem>();
+                PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
+                PI.playerLevel.text = lvls[i].ToString();
+                PI.UpdateSprite(characters[i]);
+            }
+        }
     }
     public override void OnConnectedToMaster()
     {
@@ -73,11 +94,26 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             startButton.SetActive(false);
 
-        //PV.RPC("InstantiatePlayerItem", RpcTarget.AllBuffered, acount.playerName, acount.playerLevel, acount.character);
-        PhotonNetwork.Instantiate(Path.Combine("Player", "PlayerItem"), Vector3.zero, Quaternion.identity);
-        //GameObject g = PhotonNetwork.Instantiate(Path.Combine("Player", "VoicePlayer"), Vector3.zero, Quaternion.identity);
-        //PVV = g.GetComponent<PhotonVoiceView>();
+        PV.RPC("RPC_SendItemInfo", RpcTarget.AllBuffered, acount.playerLevel, acount.character);
+        foreach(Transform child in playerList)
+        {
+            Destroy(child.gameObject);
+        }
+        //for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        //{
+        //    GameObject g = Instantiate(playerItem, playerList);
+        //    PlayerItem PI = g.GetComponent<PlayerItem>();
+        //    PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
+        //    //PI.playerLevel.text = lvls[i].ToString();
+        //}
+
         MenuSwitcher.Instance.SwitchPanel("room");
+    }
+    [PunRPC]
+    void RPC_SendItemInfo(int PL, int C)
+    {
+        lvls.Add(PL);
+        characters.Add(C);
     }
     void CheckIfNameAvailable(int nameNum)
     {
@@ -95,36 +131,97 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
             }
         }
     }
-    [PunRPC]
-    void InstantiatePlayerItem(string pName, int pLv, int character)
+    public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        GameObject g = Instantiate(playerItem, playerList);
-        PlayerItem item = g.GetComponent<PlayerItem>();
-        item.playerName.text = pName;
-        item.playerLevel.text = pLv.ToString();
+        foreach (Transform child in playerList)
+        {
+            Destroy(child.gameObject);
+        }
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        {
+            GameObject g = Instantiate(playerItem, playerList);
+            PlayerItem PI = g.GetComponent<PlayerItem>();
+            PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
+            StartCoroutine(UpdatePlayerItem(PI, i));
+        }
     }
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        StartCoroutine(UpdateOnLeft());
+    }
+    IEnumerator UpdateOnLeft()
+    {
+        yield return new WaitForSeconds(.5f);
+        foreach (Transform child in playerList)
+        {
+            Destroy(child.gameObject);
+        }
+        print(PhotonNetwork.PlayerList.Length);
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        {
+            GameObject g = Instantiate(playerItem, playerList);
+            PlayerItem PI = g.GetComponent<PlayerItem>();
+            PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
+            StartCoroutine(UpdatePlayerItem(PI, i));
+        }
+    }
+    IEnumerator UpdatePlayerItem(PlayerItem PI, int i)
+    {
+        yield return new WaitForSeconds(.5f);
+        PI.playerLevel.text = lvls[i].ToString();
+        PI.UpdateSprite(characters[i]);
+    }
+
     public void JoinRandomRoom()
     {
         PhotonNetwork.JoinRandomRoom();
     }
     public void LeaveRoom()
     {
-        foreach(Transform child in playerList)
+        //foreach(Transform child in playerList)
+        //{
+        //    if (child.GetComponent<PhotonView>().IsMine)
+        //    {
+        //        PhotonNetwork.Destroy(child.gameObject);
+        //        continue;
+        //    }
+        //    Destroy(child.gameObject);
+        //    break;
+        //}
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
         {
-            if (child.GetComponent<PlayerItem>().playerName.text == PhotonNetwork.NickName)
+            if (PhotonNetwork.PlayerList[i] == PhotonNetwork.LocalPlayer)
             {
-                Destroy(child.gameObject);
-                break;
+                PV.RPC("RPC_RemoveItemStat", RpcTarget.OthersBuffered, i);
             }
         }
-        PhotonNetwork.Destroy(PVV.gameObject);
+        lvls.Clear();
+        characters.Clear();
+        buffered = false;
+        //PhotonNetwork.Destroy(PVV.gameObject);
         PhotonNetwork.LeaveRoom();
-        MenuSwitcher.Instance.SwitchPanel("loaing");
+        MenuSwitcher.Instance.SwitchPanel("loading");
+    }
+    [PunRPC]
+    void RPC_RemoveItemStat(int i)
+    {
+        lvls.RemoveAt(i);
+        characters.RemoveAt(i);
     }
     public override void OnLeftRoom()
     {
         print("Left room");
         MenuSwitcher.Instance.SwitchPanel("main");
+    }
+    private void OnApplicationQuit()
+    {
+        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        {
+            if (PhotonNetwork.PlayerList[i] == PhotonNetwork.LocalPlayer)
+            {
+                PV.RPC("RPC_RemoveItemStat", RpcTarget.OthersBuffered, i);
+            }
+        }
     }
     public void StartGame()
     {
