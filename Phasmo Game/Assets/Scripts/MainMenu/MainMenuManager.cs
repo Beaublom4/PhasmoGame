@@ -227,4 +227,12 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     {
         SceneManager.LoadScene(1);
     }
+    public void Customize()
+    {
+        MenuSwitcher.Instance.SwitchPanel("characters");
+    }
+    public void Back()
+    {
+        MenuSwitcher.Instance.SwitchPanel("main");
+    }
 }
