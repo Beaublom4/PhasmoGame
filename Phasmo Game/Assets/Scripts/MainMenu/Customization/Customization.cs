@@ -13,12 +13,9 @@ public class Customization : MonoBehaviour
 
     bool rotate;
     float mousePos1, mousePos2;
-    private void OnEnable()
+
+    public void SpawnAccountCharacter()
     {
-        foreach (Transform child in rotateTrans)
-        {
-            Destroy(child.gameObject);
-        }
         rotateTrans.rotation = Quaternion.Euler(0, 180, 0);
         Instantiate(characters[acount.character], spawnPos.position, rotateTrans.rotation, rotateTrans);
     }
@@ -52,5 +49,9 @@ public class Customization : MonoBehaviour
         mousePos1 = Input.mousePosition.x;
         mousePos2 = mousePos1;
         rotate = _rotate;
+    }
+    public void RemoveCharacter()
+    {
+        Destroy(rotateTrans.GetChild(0).gameObject);
     }
 }

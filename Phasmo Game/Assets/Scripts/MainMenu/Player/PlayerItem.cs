@@ -15,13 +15,6 @@ public class PlayerItem : MonoBehaviour
 
     public Sprite[] characterSprites;
 
-    private void Start()
-    {
-        if(PhotonNetwork.LocalPlayer.NickName == PhotonNetwork.MasterClient.NickName)
-        {
-            host.SetActive(true);
-        }
-    }
     public void UpdateSprite(int id)
     {
         character.sprite = characterSprites[id];

@@ -12,14 +12,18 @@ using UnityEngine.UI;
 public class MainMenuManager : MonoBehaviourPunCallbacks
 {
     [SerializeField] TMP_Text playerName, roomName;
-    [SerializeField] GameObject playerItem, startButton;
-    [SerializeField] Transform playerList, voicesList;
+    [SerializeField] GameObject playerItem, roomItem, startButton;
+    [SerializeField] Transform playerList, roomsList;
     [SerializeField] Acount acount;
+    [SerializeField] Customization customizeScript;
 
     public List<int> lvls = new List<int>();
     public List<int> characters = new List<int>();
-    public bool buffered;
+    bool buffered;
     IEnumerator bufferCoroutine;
+
+    [SerializeField] GameObject[] CharacterPrefabs;
+    [SerializeField] Transform[] spawnPoints;
 
     public PhotonVoiceView PVV;
     PhotonView PV;
@@ -31,23 +35,29 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     private void Start()
     {
         print("Connecting");
+        MenuSwitcher.Instance.SwitchPanel("loading");
         PhotonNetwork.ConnectUsingSettings();
     }
     private void Update()
     {
-        if(PhotonNetwork.InRoom)
-        if(!buffered && lvls.Count == PhotonNetwork.PlayerList.Length)
-        {
-            buffered = true;
-            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        if (PhotonNetwork.InRoom)
+            if (!buffered && lvls.Count == PhotonNetwork.PlayerList.Length)
             {
-                GameObject g = Instantiate(playerItem, playerList);
-                PlayerItem PI = g.GetComponent<PlayerItem>();
-                PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
-                PI.playerLevel.text = lvls[i].ToString();
-                PI.UpdateSprite(characters[i]);
+                buffered = true;
+                for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+                {
+                    GameObject g = Instantiate(playerItem, playerList);
+                    PlayerItem PI = g.GetComponent<PlayerItem>();
+                    PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
+                    if (PhotonNetwork.PlayerList[i].IsMasterClient)
+                    {
+                        PI.host.SetActive(true);
+                    }
+                    PI.playerLevel.text = lvls[i].ToString();
+                    PI.UpdateSprite(characters[i]);
+                    SpawnCharacterPreviews();
+                }
             }
-        }
     }
     public override void OnConnectedToMaster()
     {
@@ -57,7 +67,6 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     }
     public override void OnJoinedLobby()
     {
-        MenuSwitcher.Instance.SwitchPanel("main");
         print("Joined Lobby");
         if (PhotonNetwork.NickName == "")
         {
@@ -70,6 +79,8 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
             playerName.text = PhotonNetwork.NickName;
         }
         acount.SetData();
+        customizeScript.SpawnAccountCharacter();
+        MenuSwitcher.Instance.SwitchPanel("main");
     }
     public void ChangeNickName(TMP_InputField _inputField)
     {
@@ -77,6 +88,21 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
         PhotonNetwork.NickName = name;
         print("Changed name to: " + name);
         acount.SetData();
+    }
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        foreach(Transform t in roomsList)
+        {
+            Destroy(t.gameObject);
+        }
+        foreach(RoomInfo r in roomList)
+        {
+            if (r.PlayerCount > 0)
+            {
+                GameObject g = Instantiate(roomItem, roomsList);
+                g.GetComponent<RoomItem>().SetUp(r.Name, r.PlayerCount);
+            }
+        }
     }
     public void CreateRoom()
     {
@@ -88,24 +114,25 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     {
         print("Joined Room");
 
+        customizeScript.RemoveCharacter();
+
         CheckIfNameAvailable(0);
 
         roomName.text = PhotonNetwork.CurrentRoom.Name;
         if (!PhotonNetwork.IsMasterClient)
+        {
+            PhotonNetwork.CurrentRoom.MaxPlayers = 4;
             startButton.SetActive(false);
+        }
 
         PV.RPC("RPC_SendItemInfo", RpcTarget.AllBuffered, acount.playerLevel, acount.character);
         foreach(Transform child in playerList)
         {
             Destroy(child.gameObject);
         }
-        //for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-        //{
-        //    GameObject g = Instantiate(playerItem, playerList);
-        //    PlayerItem PI = g.GetComponent<PlayerItem>();
-        //    PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
-        //    //PI.playerLevel.text = lvls[i].ToString();
-        //}
+
+        GameObject g = PhotonNetwork.Instantiate(Path.Combine("Player", "VoicePlayer"), Vector3.zero, Quaternion.identity);
+        PVV = g.GetComponent<PhotonVoiceView>();
 
         MenuSwitcher.Instance.SwitchPanel("room");
     }
@@ -133,17 +160,20 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     }
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if(PhotonNetwork.PlayerList.Length == 4)
+            {
+                PhotonNetwork.CurrentRoom.IsVisible = false;
+            }
+        }
+
+        RemoveSpawnedCharacters();
         foreach (Transform child in playerList)
         {
             Destroy(child.gameObject);
         }
-        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-        {
-            GameObject g = Instantiate(playerItem, playerList);
-            PlayerItem PI = g.GetComponent<PlayerItem>();
-            PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
-            StartCoroutine(UpdatePlayerItem(PI, i));
-        }
+        buffered = false;
     }
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
@@ -151,23 +181,29 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     }
     IEnumerator UpdateOnLeft()
     {
-        yield return new WaitForSeconds(.5f);
+        yield return new WaitForSeconds(.1f);
+        RemoveSpawnedCharacters();
         foreach (Transform child in playerList)
         {
             Destroy(child.gameObject);
         }
-        print(PhotonNetwork.PlayerList.Length);
+        print("Players: " + PhotonNetwork.PlayerList.Length);
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
         {
             GameObject g = Instantiate(playerItem, playerList);
             PlayerItem PI = g.GetComponent<PlayerItem>();
+            if (PhotonNetwork.PlayerList[i].IsMasterClient)
+            {
+                PI.host.SetActive(true);
+            }
             PI.playerName.text = PhotonNetwork.PlayerList[i].NickName;
             StartCoroutine(UpdatePlayerItem(PI, i));
         }
     }
     IEnumerator UpdatePlayerItem(PlayerItem PI, int i)
     {
-        yield return new WaitForSeconds(.5f);
+        yield return new WaitForSeconds(.1f);
+        SpawnCharacterPreviews();
         PI.playerLevel.text = lvls[i].ToString();
         PI.UpdateSprite(characters[i]);
     }
@@ -178,16 +214,6 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     }
     public void LeaveRoom()
     {
-        //foreach(Transform child in playerList)
-        //{
-        //    if (child.GetComponent<PhotonView>().IsMine)
-        //    {
-        //        PhotonNetwork.Destroy(child.gameObject);
-        //        continue;
-        //    }
-        //    Destroy(child.gameObject);
-        //    break;
-        //}
         for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
         {
             if (PhotonNetwork.PlayerList[i] == PhotonNetwork.LocalPlayer)
@@ -198,7 +224,7 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
         lvls.Clear();
         characters.Clear();
         buffered = false;
-        //PhotonNetwork.Destroy(PVV.gameObject);
+        PhotonNetwork.Destroy(PVV.gameObject);
         PhotonNetwork.LeaveRoom();
         MenuSwitcher.Instance.SwitchPanel("loading");
     }
@@ -234,5 +260,52 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     public void Back()
     {
         MenuSwitcher.Instance.SwitchPanel("main");
+    }
+    public void SpawnCharacterPreviews()
+    {
+        for (int i = 0; i < characters.Count; i++)
+        {
+            Instantiate(CharacterPrefabs[characters[i]], spawnPoints[i]);
+        }
+    }
+    public void RemoveSpawnedCharacters()
+    {
+        foreach(Transform t in spawnPoints)
+        {
+            print("Remove");
+            foreach(Transform t2 in t)
+            {
+                Destroy(t2.gameObject);
+            }
+        }
+    }
+    public void RoomList()
+    {
+        MenuSwitcher.Instance.SwitchPanel("roomsList");
+    }
+    public void Shop()
+    {
+        MenuSwitcher.Instance.SwitchPanel("shop");
+    }
+    public void Account()
+    {
+        MenuSwitcher.Instance.SwitchPanel("account");
+    }
+    public void Options()
+    {
+        MenuSwitcher.Instance.SwitchPanel("options");
+    }
+    public void Updates()
+    {
+        MenuSwitcher.Instance.SwitchPanel("updates");
+    }
+    public void Credits()
+    {
+        MenuSwitcher.Instance.SwitchPanel("credits");
+    }
+    public void Quit()
+    {
+        print("Quitting");
+        Application.Quit();
     }
 }
