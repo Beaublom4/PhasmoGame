@@ -15,13 +15,14 @@ public class GhostBehavour : MonoBehaviour
     [Header("Lists")]
     public List<GameObject> players;
     public List<GameObject> lights;
-
+    public List<GameObject> skinList;
     [Header("Door values")]
     [Range(0, 20)]
     public float sphereRadius;
     public LayerMask doorMask;
-
     public List<Collider> doors=new List<Collider>();
+    [Header("Window event")]
+    public Transform windowPos;
     //private
     private int doorCount;
 
@@ -39,12 +40,16 @@ public class GhostBehavour : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         players.AddRange(GameObject.FindGameObjectsWithTag("Player"));
         lights.AddRange(GameObject.FindGameObjectsWithTag("Light"));
-        Door();
+        WindowEvent();
     }
     private void Update()
     {
     }
     public void Hunt()
+    {
+        GetClosesPlayer();
+    }
+    public void GetClosesPlayer()
     {
         foreach (GameObject player in players)
         {
@@ -63,7 +68,6 @@ public class GhostBehavour : MonoBehaviour
                 }
             }
         }
-        //pak nereast player als target
     }
     public void Door()
     {
@@ -93,6 +97,20 @@ public class GhostBehavour : MonoBehaviour
             light.SetActive(false);
         }
     }
+    public void VisabilityOff()
+    {
+        foreach (GameObject skin in skinList)
+        {
+            skin.SetActive(false);
+        }
+    }
+    public void WindowEvent()
+    {
+        ResetValues();
+        transform.position = windowPos.position;
+        GetClosesPlayer();
+        transform.LookAt(nearestPlayer.transform);
+    }
     public void Walk()
     {
         agent.destination = walkingPoints[0].position;
@@ -102,6 +120,10 @@ public class GhostBehavour : MonoBehaviour
         doors.Clear();
         distance = 0;
         nearestPlayer = null;
+        foreach(GameObject skin in skinList)
+        {
+            skin.SetActive(true);
+        }
     }
     private void OnDrawGizmos()
     {
