@@ -337,6 +337,7 @@ MonoBehaviour:
   characterSprites:
   - {fileID: 21300000, guid: 19f663e4d836add41820bbb9d2c7d770, type: 3}
   - {fileID: 21300000, guid: a86c7323bdb7ae14fb0c58022a71e3be, type: 3}
+  - {fileID: 21300000, guid: ee5558ffd62160e409fe996c3bfc31c6, type: 3}
 --- !u!1 &7959259439335776470
 GameObject:
   m_ObjectHideFlags: 0

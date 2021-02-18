@@ -16,7 +16,7 @@ public class Account : MonoBehaviour
     {
         playerName.text = PhotonNetwork.LocalPlayer.NickName;
         playerLv.text = "LV:" + acountScript.playerLevel.ToString();
-        playerLvXp.text = acountScript.xp.ToString() + "/" + acountScript.wantedXP.ToString();
+        playerLvXp.text = acountScript.xp.ToString("F2") + "/" + acountScript.wantedXP.ToString("F0");
         lvSlider.maxValue = acountScript.wantedXP;
         lvSlider.value = acountScript.xp;
     }

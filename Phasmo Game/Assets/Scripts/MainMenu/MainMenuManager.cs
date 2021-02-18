@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 public class MainMenuManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField] TMP_Text playerName, roomName;
+    public TMP_Text playerName, roomName;
     [SerializeField] GameObject playerItem, roomItem, startButton;
     [SerializeField] Transform playerList, roomsList;
     [SerializeField] Acount acount;
@@ -68,17 +68,21 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     public override void OnJoinedLobby()
     {
         print("Joined Lobby");
-        if (PhotonNetwork.NickName == "")
+        if (!PlayerPrefs.HasKey("Player_Name"))
         {
-            string name = "Player" + Random.Range(0, 9999).ToString("0000");
-            PhotonNetwork.NickName = name;
-            playerName.text = name;
+            if (PhotonNetwork.NickName == "")
+            {
+                string name = "Player" + Random.Range(0, 9999).ToString("0000");
+                PhotonNetwork.NickName = name;
+                playerName.text = name;
+            }
+            else
+            {
+                playerName.text = PhotonNetwork.NickName;
+            }
+            acount.SetData();
         }
-        else
-        {
-            playerName.text = PhotonNetwork.NickName;
-        }
-        acount.SetData();
+        acount.DoPlayerPrefs();
         customizeScript.SpawnAccountCharacter();
         MenuSwitcher.Instance.SwitchPanel("main");
     }
@@ -87,6 +91,7 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
         string name = _inputField.text;
         PhotonNetwork.NickName = name;
         print("Changed name to: " + name);
+        PlayerPrefs.SetString("Player_Name", name);
         acount.SetData();
     }
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
