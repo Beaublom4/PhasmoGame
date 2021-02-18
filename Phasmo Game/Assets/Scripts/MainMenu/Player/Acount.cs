@@ -9,6 +9,8 @@ public class Acount : MonoBehaviour
     public int playerLevel;
     public int character;
 
+    public float xp, wantedXP;
+
     public void SetData()
     {
         playerName = PhotonNetwork.NickName;
