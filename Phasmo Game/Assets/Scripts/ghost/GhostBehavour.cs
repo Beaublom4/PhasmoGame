@@ -3,24 +3,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
-
+using UnityEngine.Events;
 public class GhostBehavour : MonoBehaviour
 {
     //public
     [Header("Ghost components")]
     public GhostType ghostType;
+    [Range(0, 20)]
+    public float sphereRadius;
+    public LayerMask doorMask;
+    public LayerMask electricObjectMask;
+    public LayerMask playerMask;
+    [Header("MapComponants")]
+    public Transform room;
     [Header("Ghost VisableWalkPoints")]
     public List<Transform> walkingPoints;
-    [Header("Ghost values")]
     [Header("Lists")]
     public List<GameObject> players;
     public List<GameObject> lights;
     public List<GameObject> skinList;
-    [Header("Door values")]
-    [Range(0, 20)]
-    public float sphereRadius;
-    public LayerMask doorMask;
     public List<Collider> doors=new List<Collider>();
+    public List<Collider> electricObjects = new List<Collider>();
+    public List<UnityEvent> ghostEvents;
     [Header("Window event")]
     public Transform windowPos;
     //private
@@ -28,9 +32,11 @@ public class GhostBehavour : MonoBehaviour
 
     private float distance;
 
+    private bool hunting;
     private GameObject nearestPlayer;
 
     private NavMeshAgent agent;
+    private Animator anim;
 
     void Start()
     {
@@ -40,28 +46,49 @@ public class GhostBehavour : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         players.AddRange(GameObject.FindGameObjectsWithTag("Player"));
         lights.AddRange(GameObject.FindGameObjectsWithTag("Light"));
-        WindowEvent();
+        anim = gameObject.GetComponent<Animator>();
+        agent.destination = room.position;  
     }
     private void Update()
     {
+        if (hunting)
+        {
+            agent.destination = nearestPlayer.transform.position;
+        }
     }
     public void Hunt()
     {
         GetClosesPlayer();
+        hunting = true;
+        Huntvisabilty();
+        anim.SetBool("isDoingRunning", true);
+    }
+    public void Huntvisabilty()
+    {
+        if (hunting)
+        {
+            Invoke("VisabilityOff", 0.5f);
+            Invoke("VisabilityOn", 1);
+            Invoke("Huntvisabilty", 1.5f);
+        }
+    }
+    public void StopHunting()
+    {
+        hunting = false;
     }
     public void GetClosesPlayer()
     {
         foreach (GameObject player in players)
         {
             float dist = Vector3.Distance(player.transform.position, transform.position);
-            if (nearestPlayer = null)
+            if (nearestPlayer == null)
             {
                 nearestPlayer = player;
                 distance = dist;
             }
             else
             {
-                if (dist > distance)
+                if (dist < distance)
                 {
                     nearestPlayer = player;
                     distance = dist;
@@ -90,11 +117,29 @@ public class GhostBehavour : MonoBehaviour
         }
         ResetValues();
     }
+    public void ElectricBlast()
+    {
+        Collider[] currentElectricObjects = Physics.OverlapSphere(transform.position, sphereRadius,electricObjectMask);
+
+        foreach (Collider collider in currentElectricObjects)
+        {
+            electricObjects.Add(collider);
+        }
+        foreach (Collider door in electricObjects)
+        {
+            //doe hier afgaan   
+        }        
+    }
+    public void TurnOffLightEvent()
+    {
+        ResetAnim();
+        anim.SetBool("isDoingOffLights", true);
+    }
     public void TurnOffLights()
     {
         foreach(GameObject light in lights)
         {
-            light.SetActive(false);
+            light.SetActive(false);         
         }
     }
     public void VisabilityOff()
@@ -104,26 +149,67 @@ public class GhostBehavour : MonoBehaviour
             skin.SetActive(false);
         }
     }
+    public void VisabilityOn()
+    {
+        foreach (GameObject skin in skinList)
+        {
+            skin.SetActive(true);
+        }
+    }
+    public void RandomVisableInRoom()
+    {
+        //if(Physics.OverlapSphere(transform.position, sphereRadius, playerMask))
+        //{
+        //doe hier ghost op playerpos en dan
+        ResetAnim();
+        int random = Random.Range(1, 3);
+        if (random == 1)
+        {
+            anim.SetBool("isDoingPain", true);
+        }
+        else if (random == 2)
+        {
+            anim.SetBool("isDoingScreaming", true);
+        }
+        //}
+    }
     public void WindowEvent()
     {
-        ResetValues();
+        VisabilityOn();
         transform.position = windowPos.position;
         GetClosesPlayer();
         transform.LookAt(nearestPlayer.transform);
+        Invoke("VisabilityOff", ghostType.windowtime);
+        ResetAnim();
+        anim.SetBool("isDoingScreaming", true);
     }
     public void Walk()
     {
-        agent.destination = walkingPoints[0].position;
+        int randomNumber = Random.Range(0, walkingPoints.Count);
+        agent.destination = walkingPoints[randomNumber].position;
+        ResetAnim();
+        anim.SetBool("isDoingWalking", true);
     }
     public void ResetValues()
     {
         doors.Clear();
         distance = 0;
         nearestPlayer = null;
-        foreach(GameObject skin in skinList)
-        {
-            skin.SetActive(true);
-        }
+        ResetAnim();
+    }
+    public void ResetAnim()
+    {
+        anim.SetBool("isDoingIdle", false);
+        anim.SetBool("isDoingRunning", false);
+        anim.SetBool("isDoingWalking", false);
+        anim.SetBool("isDoingPain", false);
+        anim.SetBool("isDoingScreaming", false);
+        anim.SetBool("isDoingOffLights", false);
+    }
+    public void RandomEvent()
+    {
+        int randomInt = Random.Range(0, ghostEvents.Count);
+        ghostEvents[randomInt]?.Invoke();
     }
     private void OnDrawGizmos()
     {
