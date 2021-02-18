@@ -7,6 +7,8 @@ using UnityEngine.Events;
 public class GhostBehavour : MonoBehaviour
 {
     //public
+    [Header("Ghost values")]
+    public int ghostActivity;
     [Header("Ghost components")]
     public GhostType ghostType;
     [Range(0, 20)]
@@ -48,6 +50,8 @@ public class GhostBehavour : MonoBehaviour
         anim = gameObject.GetComponent<Animator>();
         VisabilityOff();
         agent.destination = room.position;
+        ghostActivity = 0;
+        agent.speed = ghostType.walkingspeed;
     }
     private void Update()
     {
@@ -55,9 +59,15 @@ public class GhostBehavour : MonoBehaviour
         {
             agent.destination = nearestPlayer.transform.position;
         }
+        GhostFeelings();
+    }
+    public void GhostFeelings()
+    {
+
     }
     public void Hunt()
     {
+        agent.speed = ghostType.HuntingSpeed;
         GetClosesPlayer();
         hunting = true;
         Huntvisabilty();
@@ -203,6 +213,7 @@ public class GhostBehavour : MonoBehaviour
         doors.Clear();
         distance = 0;
         nearestPlayer = null;
+        agent.speed = ghostType.walkingspeed;
         ResetAnim();
     }
     public void ResetAnim()
