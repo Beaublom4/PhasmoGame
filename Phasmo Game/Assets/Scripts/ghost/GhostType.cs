@@ -8,6 +8,7 @@ public class GhostType : ScriptableObject
     [Header("Ghost basic values")]
     public string ghostName;
     public float windowtime;
+    public float randomEventTime;
     [Header("Ghost speed values")]
     public float walkingspeed;
     public float HuntingSpeed;

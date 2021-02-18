@@ -158,10 +158,11 @@ public class GhostBehavour : MonoBehaviour
     }
     public void RandomVisableInRoom()
     {
-        //if(Physics.OverlapSphere(transform.position, sphereRadius, playerMask))
-        //{
-        //doe hier ghost op playerpos en dan
+        GetClosesPlayer();
+        if (distance <= 10)
+        {
         ResetAnim();
+        VisabilityOn();
         int random = Random.Range(1, 3);
         if (random == 1)
         {
@@ -171,7 +172,12 @@ public class GhostBehavour : MonoBehaviour
         {
             anim.SetBool("isDoingScreaming", true);
         }
-        //}
+        Invoke("VisabilityOff", ghostType.randomEventTime);
+        }
+        else
+        {
+            RandomEvent();
+        }
     }
     public void WindowEvent()
     {
