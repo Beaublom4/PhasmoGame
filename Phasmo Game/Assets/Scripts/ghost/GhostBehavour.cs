@@ -42,12 +42,12 @@ public class GhostBehavour : MonoBehaviour
     {
         //if (!PhotonNetwork.IsMasterClient)
         //    return;
-
         agent = GetComponent<NavMeshAgent>();
         players.AddRange(GameObject.FindGameObjectsWithTag("Player"));
         lights.AddRange(GameObject.FindGameObjectsWithTag("Light"));
         anim = gameObject.GetComponent<Animator>();
-        agent.destination = room.position;  
+        VisabilityOff();
+        agent.destination = room.position;
     }
     private void Update()
     {
@@ -163,6 +163,7 @@ public class GhostBehavour : MonoBehaviour
         {
         ResetAnim();
         VisabilityOn();
+        transform.position = nearestPlayer.transform.position;
         int random = Random.Range(1, 3);
         if (random == 1)
         {
@@ -172,7 +173,7 @@ public class GhostBehavour : MonoBehaviour
         {
             anim.SetBool("isDoingScreaming", true);
         }
-        Invoke("VisabilityOff", ghostType.randomEventTime);
+        Invoke("ResetValues", ghostType.randomEventTime);
         }
         else
         {
@@ -191,6 +192,7 @@ public class GhostBehavour : MonoBehaviour
     }
     public void Walk()
     {
+        VisabilityOn();
         int randomNumber = Random.Range(0, walkingPoints.Count);
         agent.destination = walkingPoints[randomNumber].position;
         ResetAnim();

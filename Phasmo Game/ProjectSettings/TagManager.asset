@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Door
   - Light
+  - Item
+  - Breaker
   layers:
   - Default
   - TransparentFX
@@ -18,7 +20,7 @@ TagManager:
   - CharacterPreview
   - Door
   - ElectricObject
-  - 
+  - Player
   - 
   - 
   - 
