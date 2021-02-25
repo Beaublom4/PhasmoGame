@@ -118,11 +118,11 @@ public class GhostBehavour : MonoBehaviour
         {
             if (door.gameObject.GetComponent<DoorScript>().doorIsOpen)
             { 
-                door.gameObject.GetComponent<DoorScript>().CloseDoor();
+
             }
             else
             {
-                door.gameObject.GetComponent<DoorScript>().OpenDoor();
+
             }
         }
         ResetValues();

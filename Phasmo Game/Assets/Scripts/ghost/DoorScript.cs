@@ -5,13 +5,12 @@ using UnityEngine;
 public class DoorScript : MonoBehaviour
 {
     public bool doorIsOpen;
-    
-    public void OpenDoor()
+    private void Start()
     {
-        doorIsOpen = true;
+        DoorAction();
     }
-    public void CloseDoor()
+    public void DoorAction()
     {
-        doorIsOpen = false;
+        doorIsOpen = !doorIsOpen;
     }
 }
