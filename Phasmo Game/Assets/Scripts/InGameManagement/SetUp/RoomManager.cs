@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 public class RoomManager : MonoBehaviourPunCallbacks
 {
     public static RoomManager Instance;
+    public Transform spawnPoint;
 
     private void Awake()
     {

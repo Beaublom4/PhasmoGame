@@ -17,6 +17,10 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     [SerializeField] Acount acount;
     [SerializeField] Customization customizeScript;
 
+    List<RoomInfo> rooms = new List<RoomInfo>();
+
+    bool solo;
+
     public List<int> lvls = new List<int>();
     public List<int> characters = new List<int>();
     bool buffered;
@@ -96,6 +100,8 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     }
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {
+        rooms.Clear();
+        rooms.AddRange(roomList);
         foreach(Transform t in roomsList)
         {
             Destroy(t.gameObject);
@@ -111,13 +117,19 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     }
     public void CreateRoom()
     {
-        string name = "Room" + Random.Range(0, 999).ToString("000");
+        string name = "Room" + Random.Range(0, 1000).ToString("000");
         PhotonNetwork.CreateRoom(name);
         MenuSwitcher.Instance.SwitchPanel("loading");
     }
     public override void OnJoinedRoom()
     {
         print("Joined Room");
+
+        if (solo)
+        {
+            PhotonNetwork.CurrentRoom.IsOpen = false;
+            PhotonNetwork.CurrentRoom.IsVisible = false;
+        }
 
         customizeScript.RemoveCharacter();
 
@@ -140,6 +152,36 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
         PVV = g.GetComponent<PhotonVoiceView>();
 
         MenuSwitcher.Instance.SwitchPanel("room");
+    }
+    public void SoloPlay()
+    {
+        string name = "Solo" + Random.Range(0, 1000).ToString("0000");
+        PhotonNetwork.CreateRoom(name);
+        solo = true;
+        MenuSwitcher.Instance.SwitchPanel("loading");
+    }
+    public void QuickJoin(int tries)
+    {
+        if (rooms.Count == 0)
+        {
+            print("Couldn't Find Any Room!");
+            return;
+        }
+        int randomRoomNum = Random.Range(0, rooms.Count);
+        if (rooms[randomRoomNum].IsOpen)
+            PhotonNetwork.JoinRoom(rooms[randomRoomNum].Name);
+        else
+        {
+            if (tries < rooms.Count)
+            {
+                tries++;
+                QuickJoin(tries);
+            }
+            else
+            {
+                print("Couldn't Find open Rooms!");
+            }
+        }
     }
     [PunRPC]
     void RPC_SendItemInfo(int PL, int C)

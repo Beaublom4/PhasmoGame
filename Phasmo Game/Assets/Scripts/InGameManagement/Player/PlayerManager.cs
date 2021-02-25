@@ -6,17 +6,19 @@ using System.IO;
 
 public class PlayerManager : MonoBehaviour
 {
+    RoomManager RM;
     PhotonView PV;
 
     private void Awake()
     {
         PV = GetComponent<PhotonView>();
+        RM = FindObjectOfType<RoomManager>();
     }
     private void Start()
     {
         if (!PV.IsMine)
             return;
 
-        PhotonNetwork.Instantiate(Path.Combine("Player", "PlayerController"), Vector3.zero, Quaternion.identity);
+        PhotonNetwork.Instantiate(Path.Combine("Player", "PlayerController"), RM.spawnPoint.position, RM.spawnPoint.rotation);
     }
 }

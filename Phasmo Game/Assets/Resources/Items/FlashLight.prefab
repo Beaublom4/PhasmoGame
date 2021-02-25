@@ -164,8 +164,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a575bf6f266a4841b4ed7dc7eafd21c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  PV: {fileID: 0}
   itemName: FlashLight
   turnedOn: 0
+  pickedUp: 0
   onColor: {r: 0.4117647, g: 0.4117647, b: 0.4117647, a: 1}
   offColor: {r: 0.4117647, g: 0.4117647, b: 0.4117647, a: 1}
   light: {fileID: 5987989883869084286}

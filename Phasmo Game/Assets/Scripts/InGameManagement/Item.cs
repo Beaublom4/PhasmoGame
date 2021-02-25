@@ -1,25 +1,29 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 public class Item : MonoBehaviour
 {
+    [HideInInspector] public PhotonView PV;
     public string itemName;
-    public bool turnedOn;
+    public bool turnedOn, pickedUp;
 
     public Color onColor, offColor;
 
+    private void Awake()
+    {
+        PV = GetComponent<PhotonView>();
+    }
     public void TurnOn_Off()
     {
-        if(turnedOn == true)
+        if (turnedOn == true)
         {
-            turnedOn = false;
-            GetComponent<MeshRenderer>().material.color = offColor;
+            PV.RPC("TurnOn", RpcTarget.AllBuffered);
         }
         else
         {
-            turnedOn = true;
-            GetComponent<MeshRenderer>().material.color = onColor;
+            PV.RPC("TurnOff", RpcTarget.AllBuffered);
         }
     }
 }

@@ -16,12 +16,21 @@ public class PlayerMove : MonoBehaviour
     private void Awake()
     {
         PV = GetComponent<PhotonView>();
-        rb = GetComponent<Rigidbody>();
+        if (!PV.IsMine)
+        {
+            Destroy(GetComponentInChildren<Camera>().gameObject);
+            GetComponent<PlayerInteract>().enabled = false;
+            GetComponent<PlayerMove>().enabled = false;
+        }
+        else
+        {
+            rb = GetComponent<Rigidbody>();
+        }
     }
     private void LateUpdate()
     {
-        //if (!PV.IsMine)
-        //    return;
+        if (!PV.IsMine)
+            return;
         Move();
     }
     void Move()

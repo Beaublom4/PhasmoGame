@@ -1,15 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 public class FlashLight : Item
 {
     public Light light;
-    private void Update()
+    
+    [PunRPC]
+    public void TurnOn()
     {
-        if (turnedOn)
-            light.enabled = true;
-        else
-            light.enabled = false;
+        if (!PV.IsMine)
+            return;
+        turnedOn = false;
+        light.enabled = true;
+    }
+    [PunRPC]
+    public void TurnOff()
+    {
+        if (!PV.IsMine)
+            return;
+        turnedOn = true;
+        light.enabled = false;
     }
 }

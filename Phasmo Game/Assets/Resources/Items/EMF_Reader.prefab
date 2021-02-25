@@ -196,10 +196,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemName: EMF_Reader
   turnedOn: 0
+  pickedUp: 0
+  onColor: {r: 0.16740465, g: 1, b: 0, a: 1}
+  offColor: {r: 0.41099998, g: 0.41099998, b: 0.41099998, a: 1}
   rayPos: {fileID: 4290550605664886544}
   range: 3
   hittableMask:
     serializedVersion: 2
     m_Bits: 4096
-  onColor: {r: 0.16740465, g: 1, b: 0, a: 1}
-  offColor: {r: 0.41099998, g: 0.41099998, b: 0.41099998, a: 1}
